@@ -15,7 +15,7 @@
 PATH2IMAGES = "/export/home/second/shevchenko/Desktop/ME/"
 
 #time that you'd like to wait before the background changes images (in seconds)
-Time2Wait = 15
+time2Wait = 15
 
 #number of images (name) to be kept in memory (before scanning folder again)
 stop = 20
@@ -23,7 +23,7 @@ stop = 20
 #whether to choose the images at random or to choose them in order
 #True: choose images randomly
 #False: choose images as they are read in
-executeRandom = True
+executeRandom = False
 
 ######################################################################## Imports
 
@@ -31,8 +31,7 @@ from os import system, listdir, rename, popen 	#system commands, ls, rename file
 from sys import exit				#quit script
 from time import sleep 				#holds script till next image
 from platform import system as osType 		#detects OS type
-if(executeRandom):
-	from random import randint as ran 	#generate random int
+from random import randint as ran 	#generate random int
 
 ######################################################################## OS related functions
 
@@ -55,11 +54,19 @@ def renamePic(pic): #Replaces any spacing in image name with '-'
 	return (pic)
 
 def getCommand(): #Gets command to execute depending on Gnome version
-	version = int(popen("gnome-session --version").readline()[14])
+	version = popen("gnome-session --version").readline()
+	version = int(version[version.rfind('session')+8])
 	if(version == 2):
-		return "gconftool-2 --set --type=string /desktop/gnome/background/picture_filename "
+		if(popen("which gconftool").readline() != ''):
+			return "gconftool --set --type=string /desktop/gnome/background/picture_filename "
+		elif(popen("which gconftool-2").readline() != ''):
+			return "gconftool-2 --set --type=string /desktop/gnome/background/picture_filename "
+		print("gconftool or gconftool-2 not found!")
+		exit()
 	elif (version == 3):
 		return "gsettings set org.gnome.desktop.background picture-uri file:///"
+	print("only tested for gnome version 2 & gnome version 3!\nYou have version "+version)
+	exit()
 	
 def executeRandom(command, PATH2IMAGES, TIME2WAIT, stop): #Script execution: Random
 	pic = []
@@ -77,7 +84,7 @@ def executeRandom(command, PATH2IMAGES, TIME2WAIT, stop): #Script execution: Ran
 		for i in range(stop):
 			#print(">>>"+pic[0]+"<<<")
 			system(command+PATH2IMAGES+renamePic(pic.pop(0)))
-			sleep(Time2Wait)
+			sleep(TIME2WAIT)
 
 def executeProcedural(command, PATH2IMAGES, TIME2WAIT):
 	while(True):
@@ -85,6 +92,7 @@ def executeProcedural(command, PATH2IMAGES, TIME2WAIT):
 
 		for i in array:
 			system(command+PATH2IMAGES+renamePic(i))
+			sleep(TIME2WAIT)
 		
 		array = None
 		
@@ -99,9 +107,9 @@ if (PATH2IMAGES[0] != '/'):
 command = getCommand() #Changed later on in getCommand function
 
 if(executeRandom):
-	executeRandom(command, PATH2IMAGES, TIME2WAIT, stop) #changes the images at random
+	executeRandom(command, PATH2IMAGES, time2Wait, stop) #changes the images at random
 else:
-	executeProcedural(command, PATH2IMAGES, TIME2WAIT, stop)
+	executeProcedural(command, PATH2IMAGES, time2Wait)
 	
 
 
